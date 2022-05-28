@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+
+import '../widgets/chat/messages.dart';
+import '../widgets/chat/new_messages.dart';
 
 class ChatScreen extends StatelessWidget {
   //const ChatScreen({ Key? key }) : super(key: key);
@@ -9,35 +13,41 @@ class ChatScreen extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: Text("ChatApp"),
+        actions: [
+          DropdownButton(
+              icon: Icon(Icons.more_vert),
+              items: [
+                DropdownMenuItem(
+                  child: Container(
+                    child: Row(
+                      children: <Widget>[
+                        Icon(Icons.exit_to_app),
+                        SizedBox(width: 8),
+                        Text("Logout")
+                      ],
+                    ),
+                  ),
+                  value: 'Logout',
+                )
+              ],
+              onChanged: (itemIdentifier) {
+                if (itemIdentifier == "Logout") {
+                  FirebaseAuth.instance.signOut();
+                }
+              })
+        ],
       ),
-      body: StreamBuilder(
-        //snapshot is used to return a stream which means its going to emit new values when data changes
-        stream: Firestore.instance
-            .collection('chats/WgRTtjTJQMZAp89gunqh/messages')
-            .snapshots(),
-        builder: (context, streamSnapshot) {
-          if (streamSnapshot.connectionState == ConnectionState.waiting) {
-            return Center(
-              child: CircularProgressIndicator(),
-            );
-          }
-          final documents = streamSnapshot.data.documents;
-          return ListView.builder(
-            itemBuilder: (context, index) => Container(
-              padding: EdgeInsets.all(5),
-              child: Text(documents[index]['text']),
+      body: Container(
+        child: Column(
+          children: [
+            //Since Messages can return a list view it always better to wrap it with an Expanded
+            Expanded(
+              child: Messages(),
             ),
-            itemCount: documents.length,
-          );
-        },
+            NewMessage(),
+          ],
+        ),
       ),
-      floatingActionButton: FloatingActionButton(
-          child: Icon(Icons.add),
-          onPressed: () {
-            Firestore.instance
-                .collection('chats/WgRTtjTJQMZAp89gunqh/messages')
-                .add({'text': 'New Message added'});
-          }),
     );
   }
 }

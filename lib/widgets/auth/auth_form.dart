@@ -30,8 +30,11 @@ class _AuthFormState extends State<AuthForm> {
 
     if (isValid) {
       _formKey.currentState.save();
-      widget.submitfn(
-          _username, _userPassword, _userEmail.trim(), _isLogin, context);
+      if (_isLogin) {
+        _username = "";
+        widget.submitfn(
+            _username, _userPassword, _userEmail.trim(), _isLogin, context);
+      }
     }
   }
 
@@ -48,36 +51,43 @@ class _AuthFormState extends State<AuthForm> {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: <Widget>[
-                  if (!_isLogin)
-                    TextFormField(
-                      key: ValueKey("email"),
-                      keyboardType: TextInputType.emailAddress,
-                      validator: (value) {
-                        if (value.isEmpty || !value.contains('@')) {
-                          return 'Please enter a valid email address';
-                        }
-                        return null;
-                      },
-                      onSaved: (value) {
-                        _userEmail = value;
-                      },
-                      decoration: InputDecoration(
-                        labelText: 'Email Address',
-                      ),
-                    ),
+                  CircleAvatar(radius: 45),
+                  FlatButton.icon(
+                    onPressed: () {},
+                    icon: Icon(Icons.image),
+                    label: Text("Add Image"),
+                    textColor: Theme.of(context).primaryColor,
+                  ),
                   TextFormField(
-                    key: ValueKey("username"),
+                    key: ValueKey("email"),
+                    keyboardType: TextInputType.emailAddress,
                     validator: (value) {
-                      if (value.isEmpty || value.length < 4) {
-                        return 'Invalid Username';
+                      if (value.isEmpty || !value.contains('@')) {
+                        return 'Please enter a valid email address';
                       }
                       return null;
                     },
                     onSaved: (value) {
-                      _username = value;
+                      _userEmail = value;
                     },
-                    decoration: InputDecoration(labelText: "Username"),
+                    decoration: InputDecoration(
+                      labelText: 'Email Address',
+                    ),
                   ),
+                  if (!_isLogin)
+                    TextFormField(
+                      key: ValueKey("username"),
+                      validator: (value) {
+                        if (value.isEmpty || value.length < 4) {
+                          return 'Invalid Username';
+                        }
+                        return null;
+                      },
+                      onSaved: (value) {
+                        _username = value;
+                      },
+                      decoration: InputDecoration(labelText: "Username"),
+                    ),
                   TextFormField(
                     //keys are added to help flutter differentiate between similar widgets which may be together
                     key: ValueKey("password"),
