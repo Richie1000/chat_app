@@ -1,40 +1,65 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 
+import '../pickers/user_image_picker.dart';
+
 class AuthForm extends StatefulWidget {
-  //const AuthForm({ Key? key }) : super(key: key);
-  AuthForm(this.submitfn, this.isLoading);
+  AuthForm(
+    this.submitFn,
+    this.isLoading,
+  );
+
+  final bool isLoading;
   final void Function(
-    String username,
-    String password,
     String email,
+    String password,
+    String userName,
+    File image,
     bool isLogin,
     BuildContext ctx,
-  ) submitfn;
-  final bool isLoading;
+  ) submitFn;
 
   @override
-  State<AuthForm> createState() => _AuthFormState();
+  _AuthFormState createState() => _AuthFormState();
 }
 
 class _AuthFormState extends State<AuthForm> {
   final _formKey = GlobalKey<FormState>();
-  bool _isLogin = true;
-  String _userEmail = '';
-  String _username = '';
-  String _userPassword = '';
+  var _isLogin = true;
+  var _userEmail = '';
+  var _userName = '';
+  var _userPassword = '';
+  File _userImageFile;
+
+  void _pickedImage(File image) {
+    _userImageFile = image;
+  }
 
   void _trySubmit() {
     final isValid = _formKey.currentState.validate();
-    //to close softKeyboard
     FocusScope.of(context).unfocus();
+
+    if (_userImageFile == null && !_isLogin) {
+      Scaffold.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Please pick an image.'),
+          backgroundColor: Theme.of(context).errorColor,
+        ),
+      );
+      return;
+    }
 
     if (isValid) {
       _formKey.currentState.save();
-      if (_isLogin) {
-        _username = "";
-        widget.submitfn(
-            _username, _userPassword, _userEmail.trim(), _isLogin, context);
-      }
+      widget.submitFn(
+        _userEmail.trim(),
+        _userPassword.trim(),
+        _userName.trim(),
+        _userImageFile,
+        _isLogin,
+        context,
+      );
     }
   }
 
@@ -51,78 +76,70 @@ class _AuthFormState extends State<AuthForm> {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: <Widget>[
-                  CircleAvatar(radius: 45),
-                  FlatButton.icon(
-                    onPressed: () {},
-                    icon: Icon(Icons.image),
-                    label: Text("Add Image"),
-                    textColor: Theme.of(context).primaryColor,
-                  ),
+                  if (!_isLogin) UserImagePicker(_pickedImage),
                   TextFormField(
-                    key: ValueKey("email"),
-                    keyboardType: TextInputType.emailAddress,
+                    key: ValueKey('email'),
                     validator: (value) {
                       if (value.isEmpty || !value.contains('@')) {
-                        return 'Please enter a valid email address';
+                        return 'Please enter a valid email address.';
                       }
                       return null;
                     },
+                    keyboardType: TextInputType.emailAddress,
+                    decoration: InputDecoration(
+                      labelText: 'Email address',
+                    ),
                     onSaved: (value) {
                       _userEmail = value;
                     },
-                    decoration: InputDecoration(
-                      labelText: 'Email Address',
-                    ),
                   ),
                   if (!_isLogin)
                     TextFormField(
-                      key: ValueKey("username"),
+                      key: ValueKey('username'),
                       validator: (value) {
                         if (value.isEmpty || value.length < 4) {
-                          return 'Invalid Username';
+                          return 'Please enter at least 4 characters';
                         }
                         return null;
                       },
+                      decoration: InputDecoration(labelText: 'Username'),
                       onSaved: (value) {
-                        _username = value;
+                        _userName = value;
                       },
-                      decoration: InputDecoration(labelText: "Username"),
                     ),
                   TextFormField(
-                    //keys are added to help flutter differentiate between similar widgets which may be together
-                    key: ValueKey("password"),
+                    key: ValueKey('password'),
                     validator: (value) {
                       if (value.isEmpty || value.length < 7) {
-                        return 'Invalid Password';
+                        return 'Password must be at least 7 characters long.';
                       }
                       return null;
                     },
+                    decoration: InputDecoration(labelText: 'Password'),
+                    obscureText: true,
                     onSaved: (value) {
                       _userPassword = value;
                     },
-                    decoration: InputDecoration(labelText: "Password"),
-                    obscureText: true,
                   ),
-                  SizedBox(
-                    height: 12,
-                  ),
+                  SizedBox(height: 12),
                   if (widget.isLoading) CircularProgressIndicator(),
                   if (!widget.isLoading)
                     RaisedButton(
+                      child: Text(_isLogin ? 'Login' : 'Signup'),
                       onPressed: _trySubmit,
-                      child: Text(_isLogin ? "Login" : "Sign Up"),
                     ),
-                  FlatButton(
-                    child: Text(_isLogin
-                        ? "Create New Account"
-                        : "I already have an account"),
-                    onPressed: () {
-                      setState(() {
-                        _isLogin = !_isLogin;
-                      });
-                    },
-                    textColor: Theme.of(context).primaryColor,
-                  ),
+                  if (!widget.isLoading)
+                    FlatButton(
+                      textColor: Theme.of(context).primaryColor,
+                      child: Text(_isLogin
+                          ? 'Create new account'
+                          : 'I already have an account'),
+                      onPressed: () {
+                        setState(() {
+                          _isLogin = !_isLogin;
+                        });
+                      },
+                    )
                 ],
               ),
             ),

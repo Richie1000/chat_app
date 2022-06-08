@@ -1,49 +1,80 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/services.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 
 import '../widgets/auth/auth_form.dart';
 
 class AuthScreen extends StatefulWidget {
-  //const AuthScreen({ Key key }) : super(key: key);
-
   @override
-  State<AuthScreen> createState() => _AuthScreenState();
+  _AuthScreenState createState() => _AuthScreenState();
 }
 
 class _AuthScreenState extends State<AuthScreen> {
-  var _isLoading = false;
   final _auth = FirebaseAuth.instance;
-  void _submitAuthForm(String username, String password, String email,
-      bool isLogin, BuildContext ctx) async {
+  var _isLoading = false;
+
+  void _submitAuthForm(
+    String email,
+    String password,
+    String username,
+    File image,
+    bool isLogin,
+    BuildContext ctx,
+  ) async {
     AuthResult authResult;
+
     try {
       setState(() {
         _isLoading = true;
       });
       if (isLogin) {
         authResult = await _auth.signInWithEmailAndPassword(
-            email: email, password: password);
+          email: email,
+          password: password,
+        );
       } else {
         authResult = await _auth.createUserWithEmailAndPassword(
-            email: email, password: password);
+          email: email,
+          password: password,
+        );
+
+        final ref = FirebaseStorage.instance
+            .ref()
+            .child('user_image')
+            .child(authResult.user.uid + '.jpg');
+
+        //manipulating ref to a future so as to await it
+        await ref.putFile(image).onComplete;
+
+        //getting image url to work on
+        final url = await ref.getDownloadURL();
+
         await Firestore.instance
             .collection('users')
             .document(authResult.user.uid)
-            .setData({'username': username, 'email': email});
+            .setData({
+          'username': username,
+          'email': email,
+          'image_url': url,
+        });
       }
     } on PlatformException catch (err) {
-      var message = "An error occured";
+      var message = 'An error occurred, pelase check your credentials!';
 
       if (err.message != null) {
         message = err.message;
       }
 
-      Scaffold.of(ctx).showSnackBar(SnackBar(
-        content: Text(message),
-        backgroundColor: Theme.of(ctx).errorColor,
-      ));
+      Scaffold.of(ctx).showSnackBar(
+        SnackBar(
+          content: Text(message),
+          backgroundColor: Theme.of(ctx).errorColor,
+        ),
+      );
       setState(() {
         _isLoading = false;
       });
@@ -58,7 +89,11 @@ class _AuthScreenState extends State<AuthScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        backgroundColor: Theme.of(context).primaryColor,
-        body: AuthForm(_submitAuthForm, _isLoading));
+      backgroundColor: Theme.of(context).primaryColor,
+      body: AuthForm(
+        _submitAuthForm,
+        _isLoading,
+      ),
+    );
   }
 }
