@@ -13,14 +13,14 @@ class UserImagePicker extends StatefulWidget {
 }
 
 class _UserImagePickerState extends State<UserImagePicker> {
-  File _pickedImage;
+   File? _pickedImage;
 
   void _pickImage() async {
-    final pickedImageFile = await ImagePicker.pickImage(
+    final File pickedImageFile = (await ImagePicker().pickImage(
         source: ImageSource.gallery,
         imageQuality: 50,
         maxWidth: 150,
-        maxHeight: 150);
+        maxHeight: 150)) as File;
     setState(() {
       _pickedImage = pickedImageFile;
     });
@@ -35,7 +35,7 @@ class _UserImagePickerState extends State<UserImagePicker> {
           radius: 40,
           backgroundColor: Colors.grey,
           backgroundImage:
-              _pickedImage != null ? FileImage(_pickedImage) : null,
+              _pickedImage != null ? FileImage(_pickedImage!) : null,
         ),
         FlatButton.icon(
           textColor: Theme.of(context).primaryColor,

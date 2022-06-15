@@ -25,7 +25,7 @@ class _AuthScreenState extends State<AuthScreen> {
     bool isLogin,
     BuildContext ctx,
   ) async {
-    AuthResult authResult;
+    UserCredential authResult;
 
     try {
       setState(() {
@@ -45,25 +45,25 @@ class _AuthScreenState extends State<AuthScreen> {
         final ref = FirebaseStorage.instance
             .ref()
             .child('user_image')
-            .child(authResult.user.uid + '.jpg');
+            .child(authResult.user!.uid + '.jpg');
 
         //manipulating ref to a future so as to await it
-        await ref.putFile(image).onComplete;
+        await ref.putFile(image);
 
         //getting image url to work on
         final url = await ref.getDownloadURL();
 
-        await Firestore.instance
+        await FirebaseFirestore.instance
             .collection('users')
-            .document(authResult.user.uid)
-            .setData({
+            .doc(authResult.user!.uid)
+            .set({
           'username': username,
           'email': email,
           'image_url': url,
         });
       }
     } on PlatformException catch (err) {
-      var message = 'An error occurred, pelase check your credentials!';
+      String? message = 'An error occurred, pelase check your credentials!';
 
       if (err.message != null) {
         message = err.message;
@@ -71,7 +71,7 @@ class _AuthScreenState extends State<AuthScreen> {
 
       Scaffold.of(ctx).showSnackBar(
         SnackBar(
-          content: Text(message),
+          content: Text(message!),
           backgroundColor: Theme.of(ctx).errorColor,
         ),
       );

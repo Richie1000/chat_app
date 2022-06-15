@@ -9,39 +9,33 @@ class Messages extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return FutureBuilder(
-      future: FirebaseAuth.instance.currentUser(),
-      builder: (context, futureSnapShot) {
-        if (futureSnapShot.connectionState == ConnectionState.waiting) {
-          return Center(
-            child: CircularProgressIndicator(),
-          );
-        }
+    final user = FirebaseAuth.instance.currentUser;
         return StreamBuilder(
-          stream: Firestore.instance
+          stream: FirebaseFirestore.instance
               .collection('chat')
               .orderBy('createdAt', descending: true)
               .snapshots(),
-          builder: (context, chatSnapshot) {
+          builder: (context, AsyncSnapshot<QuerySnapshot> chatSnapshot) {
             if (chatSnapshot.connectionState == ConnectionState.waiting) {
               return Center(
                 child: CircularProgressIndicator(),
               );
             }
-            final chat = chatSnapshot.data.documents;
+            
+            final chat = chatSnapshot.data!.docs;
+            
             return ListView.builder(
               reverse: true,
               itemCount: chat.length,
               itemBuilder: (context, index) => MessageBubble(
-                  chat[index]['text'],
-                  chat[index]['userId'] == futureSnapShot.data.uid,
-                  ValueKey(chat[index].documentID),
-                  chat[index]['userImage'],
-                  chat[index]['username']),
+                  (chat[index].data()! as Map<String, dynamic>)['text'],
+                  (chat[index].data()! as Map<String, dynamic>)['userId'] == user?.uid,
+                  ValueKey(chat[index].id),
+                  (chat[index].data()! as Map<String, dynamic>)['userImage'],
+                  (chat[index].data()! as Map<String, dynamic>)['username']
+                  ),
             );
           },
         );
-      },
-    );
-  }
+      }  
 }

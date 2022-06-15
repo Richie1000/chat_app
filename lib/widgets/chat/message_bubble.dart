@@ -47,7 +47,7 @@ class MessageBubble extends StatelessWidget {
                               ? Colors.black
                               : Theme.of(context)
                                   .accentTextTheme
-                                  .headline1
+                                  .headline1!
                                   .color)),
                 ],
               ),
@@ -63,7 +63,8 @@ class MessageBubble extends StatelessWidget {
               backgroundImage: NetworkImage(userImage),
             ))
       ],
-      overflow: Overflow.visible,
+      //overflow: Overflow.visible,
+      clipBehavior: Clip.none,
     );
   }
 }
